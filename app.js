@@ -36,7 +36,7 @@ function renderFolders() {
   });
 }
 
-// Buka isi folder via GitHub API (Cepat & Hemat Kuota API)
+// Buka isi folder via GitHub API
 async function openFolder(folder) {
   folderListEl.classList.add("hidden");
   galleryGridEl.innerHTML = "<p style='grid-column: span 3; text-align: center;'>Memuat media...</p>";
@@ -50,15 +50,10 @@ async function openFolder(folder) {
   try {
     const response = await fetch(apiUrl);
     if (!response.ok) throw new Error("Folder kosong atau tidak ditemukan");
-    
-    let files = await response.json();
-
-    // 1. Urutkan berdasarkan nama file (Format 20260729_xxx otomatis urut dari TERBARU di atas)
-    files.sort((a, b) => b.name.localeCompare(a.name, undefined, { numeric: true, sensitivity: 'base' }));
+    const files = await response.json();
 
     galleryGridEl.innerHTML = "";
 
-    // 2. Render foto/video
     files.forEach(file => {
       const ext = file.name.split('.').pop().toLowerCase();
       const isPhoto = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
@@ -97,9 +92,8 @@ async function openFolder(folder) {
     });
 
     if (galleryGridEl.children.length === 0) {
-      galleryGridEl.innerHTML = "<p style='grid-column: span 3; text-align: center;'>Belum ada media di folder ini.</p>";
+      galleryGridEl.innerHTML = "<p style='grid-column: span 3; text-align: center;'>Folder ini kosong.</p>";
     }
-
   } catch (err) {
     galleryGridEl.innerHTML = `<p style='grid-column: span 3; text-align: center; color: #ef4444;'>${err.message}</p>`;
   }
