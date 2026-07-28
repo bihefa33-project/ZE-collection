@@ -1,7 +1,6 @@
 const GITHUB_USERNAME = "bihefa33-project";
 const REPO_NAME = "ZE-collection";
 
-// Daftar 11 Folder Utama
 const folders = [
   { name: "Generate sendiri full NDS", path: "generate-sendiri-full-nds" },
   { name: "Generate publik full NDS", path: "generate-publik-full-nds" },
@@ -21,7 +20,11 @@ const galleryGridEl = document.getElementById("gallery-grid");
 const backBtn = document.getElementById("back-btn");
 const titleEl = document.getElementById("title");
 
-// Render Daftar Folder saat aplikasi dimuat
+const modal = document.getElementById("media-modal");
+const closeModal = document.getElementById("close-modal");
+const modalContainer = document.getElementById("modal-content-container");
+
+// Render Daftar Folder Utama
 function renderFolders() {
   folderListEl.innerHTML = "";
   folders.forEach(folder => {
@@ -35,7 +38,6 @@ function renderFolders() {
 
 // Buka isi folder via GitHub API
 async function openFolder(folder) {
-  // Sembunyikan daftar folder dan bersihkan isi galeri
   folderListEl.classList.add("hidden");
   galleryGridEl.innerHTML = "<p style='grid-column: span 3; text-align: center;'>Memuat media...</p>";
   galleryGridEl.classList.remove("hidden");
@@ -47,7 +49,7 @@ async function openFolder(folder) {
 
   try {
     const response = await fetch(apiUrl);
-    if (!response.ok) throw new Error("Folder kosong atau belum dibuat");
+    if (!response.ok) throw new Error("Folder kosong atau tidak ditemukan");
     const files = await response.json();
 
     galleryGridEl.innerHTML = "";
@@ -61,36 +63,105 @@ async function openFolder(folder) {
         const card = document.createElement("div");
         card.className = "media-card";
 
-        let mediaHtml = "";
+        let mediaEl;
         if (isPhoto) {
-          mediaHtml = `<img src="${file.download_url}" loading="lazy" alt="${file.name}">`;
+          mediaEl = document.createElement("img");
+          mediaEl.src = file.download_url;
+          mediaEl.loading = "lazy";
+          mediaEl.onclick = () => showModal(file.download_url, "img");
         } else if (isVideo) {
-          mediaHtml = `<video src="${file.download_url}" controls playsinline preload="metadata"></video>`;
+          mediaEl = document.createElement("video");
+          mediaEl.src = file.download_url;
+          mediaEl.controls = true;
+          mediaEl.playsInline = true;
+          mediaEl.onclick = () => showModal(file.download_url, "video");
         }
 
-        card.innerHTML = `
-          ${mediaHtml}
-          <a href="${file.download_url}" download target="_blank" class="download-btn">⬇ Download</a>
-        `;
+        const downloadBtn = document.createElement("button");
+        downloadBtn.className = "download-btn";
+        downloadBtn.innerText = "↓ Download";
+        downloadBtn.onclick = (e) => {
+          e.stopPropagation();
+          downloadFile(file.download_url, file.name, downloadBtn);
+        };
+
+        card.appendChild(mediaEl);
+        card.appendChild(downloadBtn);
         galleryGridEl.appendChild(card);
       }
     });
 
     if (galleryGridEl.children.length === 0) {
-      galleryGridEl.innerHTML = "<p style='grid-column: span 3; text-align: center;'>Belum ada media di folder ini.</p>";
+      galleryGridEl.innerHTML = "<p style='grid-column: span 3; text-align: center;'>Folder ini kosong.</p>";
     }
   } catch (err) {
     galleryGridEl.innerHTML = `<p style='grid-column: span 3; text-align: center; color: #ef4444;'>${err.message}</p>`;
   }
 }
 
-// Navigasi Kembali ke Daftar Folder Utama
+// Fungsi Download Paksa Menggunakan Fetch Blob
+async function downloadFile(url, fileName, button) {
+  const originalText = button.innerText;
+  button.innerText = "Mengunduh...";
+  button.disabled = true;
+
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    
+    const a = document.createElement("a");
+    a.style.display = "none";
+    a.href = blobUrl;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    
+    window.URL.revokeObjectURL(blobUrl);
+    document.body.removeChild(a);
+  } catch (error) {
+    alert("Gagal mengunduh file, mencoba buka di tab baru...");
+    window.open(url, '_blank');
+  } finally {
+    button.innerText = originalText;
+    button.disabled = false;
+  }
+}
+
+// Fungsi Pop-Up Preview
+function showModal(url, type) {
+  modalContainer.innerHTML = "";
+  if (type === "img") {
+    const img = document.createElement("img");
+    img.src = url;
+    modalContainer.appendChild(img);
+  } else {
+    const video = document.createElement("video");
+    video.src = url;
+    video.controls = true;
+    video.autoplay = true;
+    modalContainer.appendChild(video);
+  }
+  modal.classList.remove("hidden");
+}
+
+// Tutup Modal Preview
+closeModal.onclick = () => {
+  modal.classList.add("hidden");
+  modalContainer.innerHTML = "";
+};
+
+modal.onclick = (e) => {
+  if (e.target === modal) {
+    modal.classList.add("hidden");
+    modalContainer.innerHTML = "";
+  }
+};
+
+// Navigasi Kembali ke Folder Utama
 backBtn.onclick = () => {
-  // Langsung sembunyikan galeri & kosongkan isinya
   galleryGridEl.classList.add("hidden");
   galleryGridEl.innerHTML = "";
-  
-  // Tampilkan kembali daftar folder
   folderListEl.classList.remove("hidden");
   backBtn.classList.add("hidden");
   titleEl.textContent = "ZE Collection";
@@ -98,4 +169,3 @@ backBtn.onclick = () => {
 
 // Inisialisasi awal
 renderFolders();
-
