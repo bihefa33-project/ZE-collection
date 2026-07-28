@@ -1,0 +1,97 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: #0f172a;
+  color: #f8fafc;
+  padding: 12px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #334155;
+}
+
+h1 {
+  font-size: 1.2rem;
+}
+
+/* Tombol Kembali */
+#back-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Grid Folder Utama */
+.folder-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.folder-card {
+  background: #1e293b;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+}
+
+/* Grid Media 3 Kolom */
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.media-card {
+  background: #1e293b;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mempertahankan aspek rasio asli file */
+.media-card img,
+.media-card video {
+  width: 100%;
+  height: auto;
+  display: block;
+  touch-action: manipulation;
+}
+
+/* Tombol Download */
+.download-btn {
+  background: rgba(15, 23, 42, 0.85);
+  color: #fff;
+  text-decoration: none;
+  text-align: center;
+  font-size: 0.7rem;
+  padding: 4px 0;
+  font-weight: bold;
+  border-top: 1px solid #334155;
+}
+
