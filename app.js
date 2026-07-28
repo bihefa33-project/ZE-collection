@@ -36,10 +36,10 @@ function renderFolders() {
   });
 }
 
-// Buka isi folder via GitHub API & Urutkan Berdasarkan Waktu Upload
+// Buka isi folder via GitHub API (Cepat & Hemat Kuota API)
 async function openFolder(folder) {
   folderListEl.classList.add("hidden");
-  galleryGridEl.innerHTML = "<p style='grid-column: span 3; text-align: center;'>Memuat media & waktu upload...</p>";
+  galleryGridEl.innerHTML = "<p style='grid-column: span 3; text-align: center;'>Memuat media...</p>";
   galleryGridEl.classList.remove("hidden");
   
   titleEl.textContent = folder.name;
@@ -51,86 +51,60 @@ async function openFolder(folder) {
     const response = await fetch(apiUrl);
     if (!response.ok) throw new Error("Folder kosong atau tidak ditemukan");
     
-    let rawFiles = await response.json();
+    let files = await response.json();
 
-    // 1. Filter hanya file foto dan video
-    const mediaFiles = rawFiles.filter(file => {
-      const ext = file.name.split('.').pop().toLowerCase();
-      return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'ogg', 'mov'].includes(ext);
-    });
+    // 1. Urutkan berdasarkan nama file (Format 20260729_xxx otomatis urut dari TERBARU di atas)
+    files.sort((a, b) => b.name.localeCompare(a.name, undefined, { numeric: true, sensitivity: 'base' }));
 
-    if (mediaFiles.length === 0) {
-      galleryGridEl.innerHTML = "<p style='grid-column: span 3; text-align: center;'>Folder ini kosong.</p>";
-      return;
-    }
-
-    // 2. Ambil tanggal upload (commit date) untuk setiap file secara bersamaan
-    const filesWithUploadTime = await Promise.all(
-      mediaFiles.map(async (file) => {
-        try {
-          const commitUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/commits?path=${file.path}&per_page=1`;
-          const commitRes = await fetch(commitUrl);
-          
-          if (commitRes.ok) {
-            const commitData = await commitRes.json();
-            if (commitData.length > 0) {
-              // Simpan timestamp waktu commit/upload
-              const uploadDate = new Date(commitData[0].commit.committer.date).getTime();
-              return { ...file, uploadTime: uploadDate };
-            }
-          }
-        } catch (e) {
-          console.error("Gagal mengambil waktu upload:", file.name);
-        }
-        return { ...file, uploadTime: 0 }; // Fallback jika gagal ambil tanggal
-      })
-    );
-
-    // 3. Urutkan file dari waktu upload TERBARU (teratas) ke TERLAMA (terbawah)
-    filesWithUploadTime.sort((a, b) => b.uploadTime - a.uploadTime);
-
-    // 4. Render file ke galeri
     galleryGridEl.innerHTML = "";
 
-    filesWithUploadTime.forEach(file => {
+    // 2. Render foto/video
+    files.forEach(file => {
       const ext = file.name.split('.').pop().toLowerCase();
       const isPhoto = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
       const isVideo = ['mp4', 'webm', 'ogg', 'mov'].includes(ext);
 
-      const card = document.createElement("div");
-      card.className = "media-card";
+      if (isPhoto || isVideo) {
+        const card = document.createElement("div");
+        card.className = "media-card";
 
-      let mediaEl;
-      if (isPhoto) {
-        mediaEl = document.createElement("img");
-        mediaEl.src = file.download_url;
-        mediaEl.loading = "lazy";
-        mediaEl.onclick = () => showModal(file.download_url, "img");
-      } else if (isVideo) {
-        mediaEl = document.createElement("video");
-        mediaEl.src = file.download_url;
-        mediaEl.controls = true;
-        mediaEl.playsInline = true;
-        mediaEl.onclick = () => showModal(file.download_url, "video");
+        let mediaEl;
+        if (isPhoto) {
+          mediaEl = document.createElement("img");
+          mediaEl.src = file.download_url;
+          mediaEl.loading = "lazy";
+          mediaEl.onclick = () => showModal(file.download_url, "img");
+        } else if (isVideo) {
+          mediaEl = document.createElement("video");
+          mediaEl.src = file.download_url;
+          mediaEl.controls = true;
+          mediaEl.playsInline = true;
+          mediaEl.onclick = () => showModal(file.download_url, "video");
+        }
+
+        const downloadBtn = document.createElement("button");
+        downloadBtn.className = "download-btn";
+        downloadBtn.innerText = "↓ Download";
+        downloadBtn.onclick = (e) => {
+          e.stopPropagation();
+          downloadFile(file.download_url, file.name, downloadBtn);
+        };
+
+        card.appendChild(mediaEl);
+        card.appendChild(downloadBtn);
+        galleryGridEl.appendChild(card);
       }
-
-      const downloadBtn = document.createElement("button");
-      downloadBtn.className = "download-btn";
-      downloadBtn.innerText = "↓ Download";
-      downloadBtn.onclick = (e) => {
-        e.stopPropagation();
-        downloadFile(file.download_url, file.name, downloadBtn);
-      };
-
-      card.appendChild(mediaEl);
-      card.appendChild(downloadBtn);
-      galleryGridEl.appendChild(card);
     });
+
+    if (galleryGridEl.children.length === 0) {
+      galleryGridEl.innerHTML = "<p style='grid-column: span 3; text-align: center;'>Belum ada media di folder ini.</p>";
+    }
 
   } catch (err) {
     galleryGridEl.innerHTML = `<p style='grid-column: span 3; text-align: center; color: #ef4444;'>${err.message}</p>`;
   }
 }
+
 
 // Fungsi Download Paksa Menggunakan Fetch Blob
 async function downloadFile(url, fileName, button) {
