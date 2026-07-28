@@ -5,6 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
   <title>ZE Collection</title>
   <link rel="stylesheet" href="style.css">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZE Collection</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <h1 id="title">ZE Collection</h1>
+    <button id="back-btn" class="hidden">← Kembali ke Folder</button>
+  </header>
+
+  <main>
+    <!-- Kontainer Folder Utama -->
+    <div id="folder-list" class="folder-grid"></div>
+
+    <!-- Kontainer Galeri Media -->
+    <div id="gallery-grid" class="media-grid hidden"></div>
+  </main>
+
+  <!-- Modal Preview Foto/Video -->
+  <div id="media-modal" class="modal hidden">
+    <span id="close-modal" class="close-btn">&times;</span>
+    <div id="modal-content-container"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+  
 </head>
 <body>
 
