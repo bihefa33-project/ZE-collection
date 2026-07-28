@@ -1,7 +1,6 @@
 const USERNAME = 'bihefa33-project';
 const REPO = 'ZE-collection';
 
-// Daftar Folder disesuaikan dengan struktur path terbaru
 const folders = [
   { name: '1. Generate sendiri full NDS', path: 'media/generate-sendiri-full-nds' },
   { name: '2. Generate publik full NDS', path: 'media/generate-publik-full-nds' },
@@ -29,7 +28,6 @@ const downloadBtn = document.getElementById('download-btn');
 
 let panzoomInstance = null;
 
-// Render Daftar Folder awal
 function renderFolders() {
   folderView.innerHTML = '';
   folders.forEach(folder => {
@@ -41,7 +39,6 @@ function renderFolders() {
   });
 }
 
-// Otomatis baca file dari GitHub REST API tanpa daftar manual
 async function loadFolderContent(folder) {
   folderView.classList.add('hidden');
   galleryView.classList.remove('hidden');
@@ -52,14 +49,19 @@ async function loadFolderContent(folder) {
 
   try {
     const response = await fetch(apiUrl);
-    if (!response.ok) throw new Error('Folder kosong atau belum dibuat');
+    
+    if (response.status === 404) {
+      throw new Error(`Folder '${folder.path}' belum ada atau Repositori di-Private.`);
+    }
+    if (!response.ok) {
+      throw new Error('Gagal mengambil data dari GitHub API');
+    }
     
     const files = await response.json();
     mediaGrid.innerHTML = '';
 
     files.forEach(file => {
-      // Abaikan file .gitkeep atau file tersembunyi lainnya
-      if (file.name.startsWith('.')) return;
+      if (file.name.startsWith('.')) return; // Abaikan .gitkeep
 
       const ext = file.name.split('.').pop().toLowerCase();
       const isImg = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
@@ -84,18 +86,16 @@ async function loadFolderContent(folder) {
       mediaGrid.innerHTML = '<p style="grid-column: span 3; text-align:center;">Belum ada foto/video di folder ini.</p>';
     }
   } catch (err) {
-    mediaGrid.innerHTML = `<p style="grid-column: span 3; text-align:center;">${err.message}</p>`;
+    mediaGrid.innerHTML = `<p style="grid-column: span 3; text-align:center; color:#ff6b6b; padding:10px;">${err.message}</p>`;
   }
 }
 
-// Fitur Tombol Kembali (Menyembunyikan foto & video sepenuhnya)
 backBtn.onclick = () => {
   galleryView.classList.add('hidden');
   folderView.classList.remove('hidden');
-  mediaGrid.innerHTML = ''; // Reset media agar tidak muncul di bawah
+  mediaGrid.innerHTML = ''; 
 };
 
-// Buka Mode Zoom (Lightbox)
 function openLightbox(url, type) {
   lightbox.classList.remove('hidden');
   zoomTarget.innerHTML = '';
@@ -115,7 +115,6 @@ function openLightbox(url, type) {
 
   zoomTarget.appendChild(el);
 
-  // Inisialisasi Pinch-to-Zoom dengan jari tangan (Panzoom Library)
   if (panzoomInstance) panzoomInstance.dispose();
   panzoomInstance = Panzoom(zoomTarget, {
     maxScale: 5,
@@ -124,13 +123,11 @@ function openLightbox(url, type) {
   });
 }
 
-// Tutup Lightbox
 lightboxClose.onclick = () => {
   lightbox.classList.add('hidden');
   zoomTarget.innerHTML = '';
   if (panzoomInstance) panzoomInstance.dispose();
 };
 
-// Jalankan saat pertama dimuat
 renderFolders();
-                     
+        
